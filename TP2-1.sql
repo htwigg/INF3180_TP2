@@ -351,6 +351,7 @@ SELECT * FROM Inscription
 -- *************************** Debut du TP2 ************************************
 -- *****************************************************************************
 
+-- ################################ C1 #########################################
 -- C1
 ALTER TABLE groupecours
 ADD CONSTRAINT Contrainte_C1
@@ -358,12 +359,12 @@ ADD CONSTRAINT Contrainte_C1
 ;
 
 -- C1 -> Test A (Ajout d'un groupecours avec MAXINSCRIPTIONS à 121)
-INSERT INTO GroupeCours
+INSERT INTO groupecours
 VALUES('INF2160',20,32003,121,'TREJ4')
 ;
 
 -- C1 -> Test B (Update d'un groupecours avec MAXINSCRIPTIONS à 121)
-UPDATE GroupeCours
+UPDATE groupecours
 SET maxinscriptions = 121
 WHERE sigle = 'INF1110' AND 
       nogroupe = 20 AND 
@@ -371,13 +372,26 @@ WHERE sigle = 'INF1110' AND
 ;
 
 
+-- ################################ C2 #########################################
 -- C2
+ALTER TABLE sessionuqam
+ADD CONSTRAINT Contrainte_C2
+  CHECK (datefin >= datedebut + 90)
+;
 
--- C2 -> Test A
+-- C2 -> Test A (Ajout d'une sessionuqam avec DATEFIN = (DATEDEBUT + 89)
+INSERT INTO sessionuqam
+VALUES(32004,'3/09/2003','01/12/2003')
+;
 
--- C2 -> Test B
+-- C2 -> Test B (Update d'une sessionuqam avec DATEFIN = (DATEDEBUT + 89)
+UPDATE sessionuqam
+SET    datefin = datedebut + 89
+WHERE  codesession = 32003
+;
 
 
+-- ################################ C3 #########################################
 -- C3
 
 -- C3 -> Test A
@@ -385,6 +399,7 @@ WHERE sigle = 'INF1110' AND
 -- C3 -> Test B
 
 
+-- ################################ C4 #########################################
 -- C4
 
 -- C4 -> Test A
@@ -392,6 +407,7 @@ WHERE sigle = 'INF1110' AND
 -- C4 -> Test B
 
 
+-- ################################ C5 #########################################
 -- C5
 
 -- C5 -> Test A
@@ -399,6 +415,7 @@ WHERE sigle = 'INF1110' AND
 -- C5 -> Test B
 
 
+-- ################################ C6 #########################################
 -- C6
 
 -- C6 -> Test A
@@ -406,6 +423,7 @@ WHERE sigle = 'INF1110' AND
 -- C6 -> Test B
 
 
+-- ################################ C7 #########################################
 -- C7
 
 -- C7 -> Test A
@@ -413,6 +431,7 @@ WHERE sigle = 'INF1110' AND
 -- C7 -> Test B
 
 
+-- ################################ C8 #########################################
 -- C8
 
 -- C8 -> Test A
@@ -420,6 +439,7 @@ WHERE sigle = 'INF1110' AND
 -- C8 -> Test B
 
 
+-- ################################ C9 #########################################
 -- C9
 
 -- C9 -> Test A
