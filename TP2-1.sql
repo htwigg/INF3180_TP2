@@ -365,10 +365,10 @@ VALUES('INF2160',20,32003,121,'TREJ4')
 
 -- C1 -> Test B (Update d'un groupecours avec MAXINSCRIPTIONS à 121)
 UPDATE groupecours
-SET maxinscriptions = 121
-WHERE sigle = 'INF1110' AND 
-      nogroupe = 20 AND 
-      codesession = 32003
+SET    maxinscriptions = 121
+WHERE  sigle = 'INF1110' AND 
+       nogroupe = 20 AND 
+       codesession = 32003
 ;
 
 
