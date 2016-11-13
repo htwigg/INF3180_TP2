@@ -407,7 +407,7 @@ BEGIN
 
   IF (:NEW.dateabandon < datedebutsession + 30) THEN
     raise_application_error(-20031, 
-      'La date d''abandon d''un cours doit être de 30 jours supérieur à la date de début de session');
+      'La date d''abandon d''un cours doit être de 30 jours supérieur à la date de début de session!');
   END IF;
   
   IF (:NEW.dateabandon >= datefinsession) THEN
