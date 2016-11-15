@@ -513,10 +513,33 @@ WHERE sigle = 'INF1130' AND nogroupe = 30 AND codesession = 32003
 
 -- ################################ C7 #########################################
 -- C7
+CREATE OR REPLACE TRIGGER Contrainte_C7
+BEFORE UPDATE OF note ON inscription
+FOR EACH ROW
+BEGIN
+  IF (:NEW.note > :OLD.note * 1.05) THEN
+    raise_application_error(-20071, 
+      'Il est interdit de faire augmenter la valeur de la note de plus de 5% lors d''une mise à jour!');
+  END IF;
+END;
 
--- C7 -> Test A
+-- C7 -> Test A (80 + 5% = 84 ... test avec 85)
+UPDATE inscription
+SET note = 85
+WHERE codepermanent = 'TREJ18088001' AND
+      sigle = 'INF1110' AND
+      nogroupe = 20 AND
+      codesession = 32003
+;
 
--- C7 -> Test B
+-- C7 -> Test B (80 + 5% = 84 ... test avec 100)
+UPDATE inscription
+SET note = 100
+WHERE codepermanent = 'LAVP08087001' AND
+      sigle = 'INF1110' AND
+      nogroupe = 20 AND
+      codesession = 32003
+;
 
 
 -- ################################ C8 #########################################
