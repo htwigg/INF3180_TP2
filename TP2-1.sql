@@ -544,10 +544,26 @@ WHERE codepermanent = 'LAVP08087001' AND
 
 -- ################################ C8 #########################################
 -- C8
+ALTER TABLE groupecours
+ADD nbAbandons INTEGER 
+    CONSTRAINT Contrainte_C8 CHECK ((nbAbandons IS NULL) OR (nbAbandons >= 0))
+;
+     
+-- C8 -> Test A (Tentative de modification nbAbandons à -1
+UPDATE groupecours
+SET nbAbandons = -1
+WHERE sigle = 'INF1110' AND
+      nogroupe = 20 AND
+      codesession = 32003
+;
 
--- C8 -> Test A
-
--- C8 -> Test B
+-- C8 -> Test B (Modification nbAbandons à null
+UPDATE groupecours
+SET nbAbandons = null
+WHERE sigle = 'INF1110' AND
+      nogroupe = 20 AND
+      codesession = 32003
+;
 
 
 -- ################################ C9 #########################################
