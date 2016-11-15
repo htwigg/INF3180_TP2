@@ -348,7 +348,7 @@ SELECT * FROM Inscription
 /
 
 -- *****************************************************************************
--- *************************** Debut du TP2 ************************************
+-- ************************** Debut du TP2-1 ***********************************
 -- *****************************************************************************
 
 -- ################################ C1 #########################################
@@ -412,7 +412,7 @@ BEGIN
   
   IF (:NEW.dateabandon >= datefinsession) THEN
     raise_application_error(-20032, 
-      'La date d''abandon d''un cours doit toujours être inférieur à la date de fin de session! ');
+      'La date d''abandon d''un cours doit toujours être inférieur à la date de fin de session!');
   END IF;
 END;
 
