@@ -470,7 +470,8 @@ ALTER TABLE inscription DROP CONSTRAINT CERefGroupeCours -- Drop la contrainte d
 ; 
 ALTER TABLE inscription -- Création de la nouvelle contrainte 
 ADD CONSTRAINT Contrainte_C5 
-  FOREIGN KEY 	(sigle,noGroupe,codeSession) REFERENCES GroupeCours ON DELETE CASCADE
+  FOREIGN KEY (sigle,noGroupe,codeSession) REFERENCES GroupeCours
+    ON DELETE CASCADE
 ;
 
 -- C5 -> Test A (Efface un groupecours)
@@ -490,10 +491,24 @@ WHERE sigle = 'INF1110' AND
 
 -- ################################ C6 #########################################
 -- C6
+CREATE INDEX siglecodesession_index ON groupecours (sigle, codesession) -- Besoin index unique pour entrées déjà présentes
+;
+ALTER TABLE groupecours
+ADD CONSTRAINT Contrainte_C6
+  UNIQUE (sigle, codesession)
+  ENABLE NOVALIDATE -- Actifs pour prochaines modifications mais ne pas tenir compte des entrées déjà présentes
+;
 
--- C6 -> Test A
+-- C6 -> Test A (Ajout d'un 2ieme groupe pour le cours INF2110 à la session 32003)
+INSERT INTO groupecours
+VALUES('INF2110',11,32003,99,'TREJ4')
+;
 
--- C6 -> Test B
+-- C6 -> Test B (Change le sigle d'un groupe pour le cours INF2110 déjà présent à la session 32003)
+UPDATE groupecours
+SET sigle = 'INF2110'
+WHERE sigle = 'INF1130' AND nogroupe = 30 AND codesession = 32003
+;
 
 
 -- ################################ C7 #########################################
