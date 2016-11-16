@@ -575,4 +575,6 @@ WHERE sigle = 'INF1110' AND
 
 -- C9 -> Test B
 
+COMMIT
+/
 
