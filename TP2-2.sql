@@ -408,6 +408,24 @@ WHERE  sigle = 'INF1110' AND
 ;
 
 
+-- ################################ 3.1 #########################################
+CREATE OR REPLACE FUNCTION LibreEnseignement (
+   codeProf IN groupecours.codeprofesseur%TYPE,
+   codeSess IN groupecours.codesession%TYPE
+   ) RETURN BOOLEAN
+IS
+  -- needed var goes here   
+BEGIN
+  --IF (COUNT VALUE == 0) THEN
+    -- RETURN TRUE;
+  --ELSE
+    -- RETURN FALSE;
+  -- END IF;
+  RETURN FALSE;
+END LibreEnseignement;
+/
+   
+
 
 
 COMMIT
