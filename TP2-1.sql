@@ -518,28 +518,28 @@ CREATE OR REPLACE TRIGGER Contrainte_C7
 BEFORE UPDATE OF note ON inscription
 FOR EACH ROW
 BEGIN
-  IF (:NEW.note > :OLD.note * 1.05) THEN
+  IF (:NEW.note > (:OLD.note * 1.05)) THEN
     raise_application_error(-20071, 
       'Il est interdit de faire augmenter la valeur de la note de plus de 5% lors d''une mise à jour!');
   END IF;
 END;
 /
 
--- C7 -> Test A (80 + 5% = 84 ... test avec 85)
+-- C7 -> Test A (70 + 5% = 73.5 ... test avec 74)
 UPDATE inscription
-SET note = 85
+SET note = 74
 WHERE codepermanent = 'TREJ18088001' AND
-      sigle = 'INF1110' AND
-      nogroupe = 20 AND
+      sigle = 'INF1130' AND
+      nogroupe = 10 AND
       codesession = 32003
 ;
 
--- C7 -> Test B (80 + 5% = 84 ... test avec 100)
+-- C7 -> Test B (80 + 5% = 84 ... test avec 85)
 UPDATE inscription
-SET note = 100
-WHERE codepermanent = 'LAVP08087001' AND
-      sigle = 'INF1110' AND
-      nogroupe = 20 AND
+SET note = 85
+WHERE codepermanent = 'TREL14027801' AND
+      sigle = 'INF1130' AND
+      nogroupe = 30 AND
       codesession = 32003
 ;
 
@@ -551,19 +551,19 @@ ADD nbAbandons INTEGER
     CONSTRAINT Contrainte_C8 CHECK ((nbAbandons IS NULL) OR (nbAbandons >= 0))
 ;
      
--- C8 -> Test A (Tentative de modification nbAbandons à -1
+-- C8 -> Test A (Tentative de modification nbAbandons à -1)
 UPDATE groupecours
 SET nbAbandons = -1
-WHERE sigle = 'INF1110' AND
-      nogroupe = 20 AND
+WHERE sigle = 'INF1130' AND
+      nogroupe = 10 AND
       codesession = 32003
 ;
 
--- C8 -> Test B (Modification nbAbandons à null
+-- C8 -> Test B (Modification nbAbandons à null)
 UPDATE groupecours
 SET nbAbandons = null
-WHERE sigle = 'INF1110' AND
-      nogroupe = 20 AND
+WHERE sigle = 'INF1130' AND
+      nogroupe = 30 AND
       codesession = 32003
 ;
 
