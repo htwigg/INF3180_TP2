@@ -415,6 +415,7 @@ BEGIN
       'La date d''abandon d''un cours doit toujours être inférieur à la date de fin de session!');
   END IF;
 END;
+/
 
 -- C3 -> Test A (Ajout avec DATEABANDON = datedebut+29)
 INSERT INTO Inscription
@@ -522,6 +523,7 @@ BEGIN
       'Il est interdit de faire augmenter la valeur de la note de plus de 5% lors d''une mise à jour!');
   END IF;
 END;
+/
 
 -- C7 -> Test A (80 + 5% = 84 ... test avec 85)
 UPDATE inscription
