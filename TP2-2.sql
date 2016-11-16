@@ -358,14 +358,14 @@ FROM      inscription
 GROUP BY  sigle, nogroupe, codesession
 ORDER BY  codesession, sigle, nogroupe -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! PAS DEMANDÉ, A RETIRER AVANT REMISE!!!!!!!
 ;
-DROP VIEW MoyenneParGroupeParSession;  -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! A RETIRER AVANT REMISE!!!!!!!!!!!!!!!!!!!!
+--DROP VIEW MoyenneParGroupeParSession;  -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! A RETIRER AVANT REMISE!!!!!!!!!!!!!!!!!!!!
 
 
 -- ################################ 2.2 #########################################
 SELECT * FROM MoyenneParGroupeParSession
 ;
 
-SELECT * FROM INSCRIPTION ORDER BY codesession, sigle, nogroupe; --- !!!!!!!!!!!!!!!!!!!!!!!!!TO DELETE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+--SELECT * FROM INSCRIPTION ORDER BY codesession, sigle, nogroupe; --- !!!!!!!!!!!!!!!!!!!!!!!!!TO DELETE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 -- ################################ 2.3 #########################################
@@ -380,6 +380,7 @@ BEGIN
          nogroupe = :NEW.nogroupe AND
          codesession = :NEW.codesession;
 END;
+/
 
 -- ################################ 2.4 #########################################
 -- 2.4.1
@@ -404,34 +405,6 @@ FROM   inscription
 WHERE  sigle = 'INF1110' AND
        nogroupe = 20 AND
        codesession = 32003
-;
-
-
-
-
-
-
-
--- !!!!!!!! THIS BLOCK IS FOR TESTING ONLY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-UPDATE MoyenneParGroupeParSession
-SET    moyennegroupe = moyennegroupe + 10
-WHERE  sigle = 'INF5180' AND
-       nogroupe = 10 AND
-       codesession = 12004
-;
-
-SELECT *
-FROM   MoyenneParGroupeParSession
-WHERE  sigle = 'INF5180' AND
-       nogroupe = 10 AND
-       codesession = 12004
-;
-
-SELECT * 
-FROM   inscription
-WHERE  sigle = 'INF5180' AND
-       nogroupe = 10 AND
-       codesession = 12004
 ;
 
 
