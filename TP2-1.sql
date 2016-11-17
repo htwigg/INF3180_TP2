@@ -482,20 +482,27 @@ ADD CONSTRAINT Contrainte_C5
     ON DELETE CASCADE
 ;
 
--- C5 -> Test A (Efface un groupecours)
+-- C5 -> Test A (Efface un groupecours et ses inscriptions correspondantes)
 DELETE FROM groupecours
 WHERE sigle = 'INF1110' AND 
       nogroupe = 20 AND 
       codesession = 32003
 ;
 
--- C5 -> Test B (Efface un deuxième groupecours)
+-- C5 -> Test B (Efface un deuxième groupecours et ses inscriptions correspondantes)
 DELETE FROM groupecours
 WHERE sigle = 'INF1110' AND 
       nogroupe = 30 AND 
       codesession = 32003
 ;
 
+-- C5 -> Resultats (Cours INF1110 groupes 20 et 30 ne sont plus présents à la session 32003)
+SELECT *
+FROM   inscription
+WHERE  codesession = 32003 AND
+       sigle = 'INF1110' AND
+       NOGROUPE IN (20,30)
+;
 
 -- ################################ C6 #########################################
 -- C6
