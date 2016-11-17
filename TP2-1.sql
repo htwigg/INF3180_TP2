@@ -374,19 +374,26 @@ WHERE  sigle = 'INF1110' AND
 
 -- ################################ C2 #########################################
 -- C2
-ALTER TABLE sessionuqam
-ADD CONSTRAINT Contrainte_C2
-  CHECK (datefin >= datedebut + 90)
-;
+CREATE OR REPLACE TRIGGER Contrainte_C2
+BEFORE INSERT OR UPDATE OF datedebut, datefin ON sessionuqam
+FOR EACH ROW
+BEGIN
+  IF (:NEW.datefin != (:NEW.datedebut + 90)) THEN
+    raise_application_error(-20021, 
+      'La date de fin de session doit être d''exactement 90 jours 
+      supérieure à la date de début de session');
+  END IF;
+END;
+/
 
 -- C2 -> Test A (Ajout avec DATEFIN = (DATEDEBUT + 89)
 INSERT INTO sessionuqam
 VALUES(32004,'3/09/2003','01/12/2003')
 ;
 
--- C2 -> Test B (Update avec DATEFIN = (DATEDEBUT + 89)
+-- C2 -> Test B (Update avec DATEDEBUT = (DATEFIN - 91)
 UPDATE sessionuqam
-SET    datefin = datedebut + 89
+SET    datedebut = datefin - 91
 WHERE  codesession = 32003
 ;
 
