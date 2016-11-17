@@ -414,23 +414,24 @@ BEGIN
 
   IF (:NEW.dateabandon < datedebutsession + 30) THEN
     raise_application_error(-20031, 
-      'La date d''abandon d''un cours doit être de 30 jours supérieur à la date de début de session!');
+      'La date d''abandon d''un cours doit être de 30 jours 
+      supérieur à la date de début de session!');
   END IF;
   
   IF (:NEW.dateabandon >= datefinsession) THEN
     raise_application_error(-20032, 
-      'La date d''abandon d''un cours doit toujours être inférieur à la date de fin de session!');
+      'La date d''abandon d''un cours doit toujours être 
+      inférieur à la date de fin de session!');
   END IF;
 END;
 /
 
 -- C3 -> Test A (Ajout avec DATEABANDON = datedebut+29)
 INSERT INTO Inscription
-VALUES('TREY09087501','INF1110',20,32003,'25/08/2003','02/10/2003',80) -- 02/10/2003 = datedebut+29
+VALUES('TREY09087501','INF1110',20,32003,'25/08/2003','02/10/2003',80) -- 02/10/2003=datedebut+29
 ;
-delete from inscription where codepermanent = 'TREY09087501' AND sigle = 'INF1110' AND nogroupe = 20 AND codesession = 32003; -- DELETE BLOC FOR TESTING ONLY !!!!!!!!!!!!!!!!!!!
 
--- C3 -> Test B (Update avec DATEABANDON = datedebut+29
+-- C3 -> Test B (Update avec DATEABANDON = datedebut+29)
 UPDATE Inscription
 SET    dateabandon = '02/10/2003'
 WHERE  codepermanent = 'TREJ18088001' AND
@@ -439,7 +440,7 @@ WHERE  codepermanent = 'TREJ18088001' AND
        codesession = 32003
 ;
 
--- aBANDONNE APRES FIN SESSION...
+-- C3 -> Test C (Abandon le dernier jour de la session non permis)
 UPDATE Inscription
 SET    dateabandon = '17/12/2003'
 WHERE  codepermanent = 'TREJ18088001' AND
