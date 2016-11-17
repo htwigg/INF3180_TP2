@@ -456,12 +456,11 @@ ALTER TABLE inscription
 ADD CONSTRAINT Contrainte_C4
   CHECK ((dateabandon IS NULL) OR (dateabandon IS NOT NULL AND note IS NULL))
 ;
+
 -- C4 -> Test A (Ajout d'une inscription avec une date d'abandon et une note)
 INSERT INTO Inscription
 VALUES('TREY09087501','INF1110',20,32003,'25/08/2003','02/11/2003',90)
 ;
-
-delete from inscription where codepermanent = 'TREY09087501' AND sigle = 'INF1110' AND nogroupe = 20 AND codesession = 32003; -- DELETE BLOC FOR TESTING ONLY !!!!!!!!!!!!!!!!!!!
 
 -- C4 -> Test B (Update pour ajouter une date d'abandon à un étudiant ayant déjà une note)
 UPDATE Inscription
