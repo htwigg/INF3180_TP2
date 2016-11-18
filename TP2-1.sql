@@ -513,20 +513,39 @@ WHERE  codesession = 32003 AND
 --  UNIQUE (sigle, codesession)
 --  ENABLE NOVALIDATE -- Actifs pour prochaines modifications mais ne pas tenir compte des entrées déjà présentes
 --;
-CREATE OR REPLACE TRIGGER Contrainte_C6
-BEFORE INSERT OR UPDATE OF sigle ON groupecours
+
+CREATE GLOBAL TEMPORARY TABLE groupecours_tmp (
+  sigle 		      CHAR(7) 	NOT NULL,
+  codeSession	    INTEGER		NOT NULL
+) ON COMMIT DELETE ROWS;
+drop TABLE groupecours_tmp; -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+CREATE OR REPLACE TRIGGER Contrainte_C6_1
+BEFORE INSERT OR UPDATE OF sigle, codesession ON groupecours
+FOR EACH ROW 
+BEGIN 
+    INSERT INTO groupecours_tmp(sigle, codesession) VALUES (:NEW.sigle, :NEW.codesession);
+END ;
+/
+
+CREATE OR REPLACE TRIGGER Contrainte_C6_2
+AFTER INSERT OR UPDATE OF sigle, codesession ON groupecours
 FOR EACH ROW
 DECLARE
-sigleCount   INTEGER;
+sigleExist   INTEGER;
 BEGIN
-  SELECT COUNT(*)
-  INTO   sigleCount
-  FROM   groupecours
-  WHERE  sigle = :NEW.sigle;
+  FOR x IN (SELECT * FROM groupecours_tmp) LOOP
+    SELECT count(*)
+    INTO   sigleExist
+    FROM   groupecours
+    WHERE  x.codesession = codesession AND x.sigle = sigle;
 
-  IF (sigleCount != 0) THEN -- AND (:NEW.sigle != :OLD.sigle)) THEN -- OU ROWID ????     UPDATE d'un sigle si le sigle est identique à lui même est permis  (!!!!!!!!!!!: todo à tester!!!!!!!
-    raise_application_error(-20061, 'Un cours (sigle) ne peut être donné plus d''une fois pendant la même session (codesession)!');
-  END IF;
+    IF (sigleExist != 0) THEN -- AND (:NEW.sigle != :OLD.sigle)) THEN -- OU ROWID ????     UPDATE d'un sigle si le sigle est identique à lui même est permis  (!!!!!!!!!!!: todo à tester!!!!!!!
+      raise_application_error(-20061, 'Un cours (sigle) ne peut être donné plus d''une fois pendant la même session (codesession)!');
+    END IF;
+  END LOOP;
+  DELETE FROM groupecours_tmp;
 END;
 /
 
