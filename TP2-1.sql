@@ -506,18 +506,37 @@ WHERE  codesession = 32003 AND
 
 -- ################################ C6 #########################################
 -- C6
-CREATE INDEX siglecodesession_index ON groupecours (sigle, codesession) -- Besoin index unique pour entrées déjà présentes
-;
-ALTER TABLE groupecours
-ADD CONSTRAINT Contrainte_C6
-  UNIQUE (sigle, codesession)
-  ENABLE NOVALIDATE -- Actifs pour prochaines modifications mais ne pas tenir compte des entrées déjà présentes
-;
+--CREATE INDEX siglecodesession_index ON groupecours (sigle, codesession) -- Besoin index unique pour entrées déjà présentes
+--;
+--ALTER TABLE groupecours
+--ADD CONSTRAINT Contrainte_C6
+--  UNIQUE (sigle, codesession)
+--  ENABLE NOVALIDATE -- Actifs pour prochaines modifications mais ne pas tenir compte des entrées déjà présentes
+--;
+CREATE OR REPLACE TRIGGER Contrainte_C6
+BEFORE INSERT OR UPDATE OF sigle ON groupecours
+FOR EACH ROW
+DECLARE
+sigleCount   INTEGER;
+BEGIN
+  SELECT COUNT(*)
+  INTO   sigleCount
+  FROM   groupecours
+  WHERE  sigle = :NEW.sigle;
+
+  IF (sigleCount != 0) THEN -- AND (:NEW.sigle != :OLD.sigle)) THEN -- OU ROWID ????     UPDATE d'un sigle si le sigle est identique à lui même est permis  (!!!!!!!!!!!: todo à tester!!!!!!!
+    raise_application_error(-20061, 'Un cours (sigle) ne peut être donné plus d''une fois pendant la même session (codesession)!');
+  END IF;
+END;
+/
 
 -- C6 -> Test A (Ajout d'un 2ieme groupe pour le cours INF2110 à la session 32003)
 INSERT INTO groupecours
 VALUES('INF2110',11,32003,99,'TREJ4')
 ;
+
+select * from groupecours where sigle = 'INF2110' AND codesession = 32003;
+delete from groupecours where sigle = 'INF2110' AND codesession = 32003 AND nogroupe = 11;
 
 -- C6 -> Test B (Change le sigle d'un groupe pour le cours INF2110 déjà présent à la session 32003)
 UPDATE groupecours
