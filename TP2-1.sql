@@ -380,8 +380,7 @@ FOR EACH ROW
 BEGIN
   IF (:NEW.datefin != (:NEW.datedebut + 90)) THEN
     raise_application_error(-20021, 
-      'La date de fin de session doit être d''exactement 90 jours 
-      supérieure à la date de début de session');
+      'La date de fin de session doit être d''exactement 90 jours supérieure à la date de début de session');
   END IF;
 END;
 /
@@ -414,14 +413,12 @@ BEGIN
 
   IF (:NEW.dateabandon < datedebutsession + 30) THEN
     raise_application_error(-20031, 
-      'La date d''abandon d''un cours doit être de 30 jours 
-      supérieur à la date de début de session!');
+      'La date d''abandon d''un cours doit être de 30 jours supérieur à la date de début de session!');
   END IF;
   
   IF (:NEW.dateabandon >= datefinsession) THEN
     raise_application_error(-20032, 
-      'La date d''abandon d''un cours doit toujours être 
-      inférieur à la date de fin de session!');
+      'La date d''abandon d''un cours doit toujours être inférieur à la date de fin de session!');
   END IF;
 END;
 /
