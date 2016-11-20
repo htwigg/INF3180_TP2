@@ -519,10 +519,10 @@ CREATE GLOBAL TEMPORARY TABLE CoursDispoParSession_TMP (
 CREATE OR REPLACE TRIGGER Contrainte_C6_1
 BEFORE INSERT OR UPDATE OF sigle, codesession ON groupecours
 BEGIN
-    INSERT INTO CoursDispoParSession_TMP(sigle, codesession)
-      SELECT   sigle, codesession
-      FROM     groupecours
-      GROUP BY sigle, codesession;
+  INSERT INTO CoursDispoParSession_TMP(sigle, codesession)
+    SELECT   sigle, codesession
+    FROM     groupecours
+    GROUP BY sigle, codesession;
 END;
 /
 
