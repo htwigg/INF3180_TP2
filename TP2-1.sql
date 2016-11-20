@@ -514,40 +514,43 @@ WHERE  codesession = 32003 AND
 --  ENABLE NOVALIDATE -- Actifs pour prochaines modifications mais ne pas tenir compte des entrées déjà présentes
 --;
 
-CREATE GLOBAL TEMPORARY TABLE groupecours_tmp (
+CREATE GLOBAL TEMPORARY TABLE CoursDispoParSession_TMP (
   sigle 		      CHAR(7) 	NOT NULL,
   codeSession	    INTEGER		NOT NULL
 ) ON COMMIT DELETE ROWS;
-drop TABLE groupecours_tmp; -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 
 CREATE OR REPLACE TRIGGER Contrainte_C6_1
 BEFORE INSERT OR UPDATE OF sigle, codesession ON groupecours
-FOR EACH ROW 
-BEGIN 
-    INSERT INTO groupecours_tmp(sigle, codesession) VALUES (:NEW.sigle, :NEW.codesession);
-END ;
+BEGIN
+    INSERT INTO CoursDispoParSession_TMP(sigle, codesession)
+      SELECT   sigle, codesession
+      FROM     groupecours
+      GROUP BY sigle, codesession;
+END;
 /
 
 CREATE OR REPLACE TRIGGER Contrainte_C6_2
 AFTER INSERT OR UPDATE OF sigle, codesession ON groupecours
 FOR EACH ROW
 DECLARE
-sigleExist   INTEGER;
+sigleCount   INTEGER;
 BEGIN
-  FOR x IN (SELECT * FROM groupecours_tmp) LOOP
-    SELECT count(*)
-    INTO   sigleExist
-    FROM   groupecours
-    WHERE  x.codesession = codesession AND x.sigle = sigle;
-
-    IF (sigleExist != 0) THEN -- AND (:NEW.sigle != :OLD.sigle)) THEN -- OU ROWID ????     UPDATE d'un sigle si le sigle est identique à lui même est permis  (!!!!!!!!!!!: todo à tester!!!!!!!
-      raise_application_error(-20061, 'Un cours (sigle) ne peut être donné plus d''une fois pendant la même session (codesession)!');
+  IF INSERTING OR (UPDATING AND (:NEW.sigle != :OLD.sigle OR :NEW.codesession != :OLD.codesession)) THEN
+    SELECT COUNT(*)
+    INTO   sigleCount
+    FROM   CoursDispoParSession_TMP
+    WHERE  :NEW.codesession = codesession AND :NEW.sigle = sigle;
+  
+    IF (sigleCount != 0) THEN
+      raise_application_error(-20061,
+        'Un cours (sigle) ne peut être donné plus d''une fois pendant la même session (codesession)!');
     END IF;
-  END LOOP;
-  DELETE FROM groupecours_tmp;
+  END IF;
+
+  DELETE FROM CoursDispoParSession_TMP;
 END;
 /
+
 
 -- C6 -> Test A (Ajout d'un 2ieme groupe pour le cours INF2110 à la session 32003)
 INSERT INTO groupecours
@@ -562,6 +565,8 @@ UPDATE groupecours
 SET sigle = 'INF2110'
 WHERE sigle = 'INF1130' AND nogroupe = 30 AND codesession = 32003
 ;
+select * from groupecours where sigle = 'INF1130' AND nogroupe = 30 AND codesession = 32003; -- avant
+select * from groupecours where sigle = 'INF2110' AND nogroupe = 30 AND codesession = 32003; -- apres
 
 
 -- ################################ C7 #########################################
