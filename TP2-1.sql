@@ -562,7 +562,7 @@ WHERE sigle = 'INF1130' AND
       codesession = 32003
 ;
 
--- C8 -> Test B (Modification nbAbandons à null)
+-- C8 -> Test B (Modification nbAbandons à null est permis)
 UPDATE groupecours
 SET nbAbandons = null
 WHERE sigle = 'INF1130' AND
