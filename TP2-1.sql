@@ -492,69 +492,27 @@ WHERE  codesession = 32003 AND
        NOGROUPE IN (20,30)
 ;
 
+
 -- ################################ C6 #########################################
--- C6
---CREATE INDEX siglecodesession_index ON groupecours (sigle, codesession) -- Besoin index unique pour entrées déjà présentes
---;
---ALTER TABLE groupecours
---ADD CONSTRAINT Contrainte_C6
---  UNIQUE (sigle, codesession)
---  ENABLE NOVALIDATE -- Actifs pour prochaines modifications mais ne pas tenir compte des entrées déjà présentes
---;
-
-CREATE GLOBAL TEMPORARY TABLE CoursDispoParSession_TMP (
-  sigle 		      CHAR(7) 	NOT NULL,
-  codeSession	    INTEGER		NOT NULL
-) ON COMMIT DELETE ROWS;
-
-CREATE OR REPLACE TRIGGER Contrainte_C6_1
-BEFORE INSERT OR UPDATE OF sigle, codesession ON groupecours
-BEGIN
-  INSERT INTO CoursDispoParSession_TMP(sigle, codesession)
-    SELECT   sigle, codesession
-    FROM     groupecours
-    GROUP BY sigle, codesession;
-END;
-/
-
-CREATE OR REPLACE TRIGGER Contrainte_C6_2
-AFTER INSERT OR UPDATE OF sigle, codesession ON groupecours
-FOR EACH ROW
-DECLARE
-sigleCount   INTEGER;
-BEGIN
-  IF INSERTING OR (UPDATING AND (:NEW.sigle != :OLD.sigle OR :NEW.codesession != :OLD.codesession)) THEN
-    SELECT COUNT(*)
-    INTO   sigleCount
-    FROM   CoursDispoParSession_TMP
-    WHERE  :NEW.codesession = codesession AND :NEW.sigle = sigle;
-  
-    IF (sigleCount != 0) THEN
-      raise_application_error(-20061,
-        'Un cours (sigle) ne peut être donné plus d''une fois pendant la même session (codesession)!');
-    END IF;
-  END IF;
-
-  DELETE FROM CoursDispoParSession_TMP;
-END;
-/
-
+-- C6 Note: J'ai validé cette méthode avec Mme Sadat en classe.
+CREATE INDEX siglecodesession_index ON groupecours (sigle, codesession) -- Création index unique pour entrées déjà présentes
+;
+ALTER TABLE groupecours
+ADD CONSTRAINT Contrainte_C6
+  UNIQUE (sigle, codesession)
+  ENABLE NOVALIDATE -- Actifs pour prochaines modifications mais ne pas tenir compte des entrées déjà présentes
+;
 
 -- C6 -> Test A (Ajout d'un 2ieme groupe pour le cours INF2110 à la session 32003)
 INSERT INTO groupecours
 VALUES('INF2110',11,32003,99,'TREJ4')
 ;
 
-select * from groupecours where sigle = 'INF2110' AND codesession = 32003;
-delete from groupecours where sigle = 'INF2110' AND codesession = 32003 AND nogroupe = 11;
-
 -- C6 -> Test B (Change le sigle d'un groupe pour le cours INF2110 déjà présent à la session 32003)
 UPDATE groupecours
 SET sigle = 'INF2110'
 WHERE sigle = 'INF1130' AND nogroupe = 30 AND codesession = 32003
 ;
-select * from groupecours where sigle = 'INF1130' AND nogroupe = 30 AND codesession = 32003; -- avant
-select * from groupecours where sigle = 'INF2110' AND nogroupe = 30 AND codesession = 32003; -- apres
 
 
 -- ################################ C7 #########################################
