@@ -521,25 +521,25 @@ CREATE OR REPLACE TRIGGER Contrainte_C7
 BEFORE UPDATE OF note ON inscription
 FOR EACH ROW
 BEGIN
-  IF (:NEW.note > (:OLD.note * 1.05)) THEN
+  IF (:NEW.note > (:OLD.note + 5)) THEN
     raise_application_error(-20071, 
       'Il est interdit de faire augmenter la valeur de la note de plus de 5% lors d''une mise à jour!');
   END IF;
 END;
 /
 
--- C7 -> Test A (70 + 5% = 73.5 ... test avec 74)
+-- C7 -> Test A (70 + 6%)
 UPDATE inscription
-SET note = 74
+SET note = note + 6
 WHERE codepermanent = 'TREJ18088001' AND
       sigle = 'INF1130' AND
       nogroupe = 10 AND
       codesession = 32003
 ;
 
--- C7 -> Test B (80 + 5% = 84 ... test avec 85)
+-- C7 -> Test B (80 + 10%)
 UPDATE inscription
-SET note = 85
+SET note = note + 10
 WHERE codepermanent = 'TREL14027801' AND
       sigle = 'INF1130' AND
       nogroupe = 30 AND
