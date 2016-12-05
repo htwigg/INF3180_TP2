@@ -428,16 +428,7 @@ INSERT INTO Inscription
 VALUES('TREY09087501','INF1110',20,32003,'25/08/2003','02/10/2003',80) -- 02/10/2003=datedebut+29
 ;
 
--- C3 -> Test B (Update avec DATEABANDON = datedebut+29)
-UPDATE Inscription
-SET    dateabandon = '02/10/2003'
-WHERE  codepermanent = 'TREJ18088001' AND
-       sigle = 'INF1110' AND
-       nogroupe = 20 AND
-       codesession = 32003
-;
-
--- C3 -> Test C (Abandon le dernier jour de la session non permis)
+-- C3 -> Test B (Abandon le dernier jour de la session non permis)
 UPDATE Inscription
 SET    dateabandon = '17/12/2003'
 WHERE  codepermanent = 'TREJ18088001' AND
