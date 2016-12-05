@@ -484,7 +484,7 @@ WHERE sigle = 'INF1110' AND
       codesession = 32003
 ;
 
--- C5 -> Resultats (Cours INF1110 groupes 20 et 30 ne sont plus présents à la session 32003)
+-- C5 -> Resultats des Tests (Cours INF1110 groupes 20 et 30 ne sont plus présents à la session 32003)
 SELECT *
 FROM   inscription
 WHERE  codesession = 32003 AND
