@@ -629,10 +629,42 @@ select * from inscription; -- DEBUG
 select * from groupecours; -- DEBUG
 delete from inscription where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
 INSERT INTO Inscription VALUES('TREJ18088001','INF1130',10,32003,'16/08/2003',null,70); -- DEBUG
-
 UPDATE inscription SET NOGROUPE = 30 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
 UPDATE inscription SET NOGROUPE = 10 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 30 AND CODESESSION = 32003; -- DEBUG
 
+
+
+CREATE OR REPLACE TRIGGER Contrainte_C9
+BEFORE INSERT OR DELETE OR UPDATE ON inscription
+FOR EACH ROW
+DECLARE
+  nbEtudiants GroupeCours.nbInscriptions%type;
+  isValid boolean := true;
+BEGIN
+  IF INSERTING THEN
+    SELECT nbInscriptions INTO nbEtudiants FROM GroupeCours
+    WHERE sigle = :NEW.sigle AND nogroupe = :NEW.nogroupe AND codesession = :NEW.codesession;
+    
+    IF nbEtudiants < 5 THEN
+      DBMS_OUTPUT.PUT_LINE('Insertion refuse. Seulement ' || nbEtudiants || ' etudiants pour le cours '
+                            || :NEW.sigle ||'-' || :NEW.nogroupe || ' a la session ' || :NEW.codesession);
+      isValid := false;
+    END IF;
+  END IF;
+  
+  IF isValid = false THEN
+    DELETE FROM GroupeCours WHERE sigle = :NEW.sigle AND nogroupe = :NEW.nogroupe AND codesession = :NEW.codesession;
+  END IF;
+END;
+/
+
+
+
+
+delete from inscription where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
+INSERT INTO Inscription VALUES('TREJ18088001','INF1130',10,32003,'16/08/2003',null,70); -- DEBUG
+select * from inscription; -- DEBUG
+select * from groupecours; -- DEBUG
 rollback; -- DEBUG
 
 
@@ -643,26 +675,7 @@ rollback; -- DEBUG
 
 
 
-
-
-
-
-
-
-
-
-
-CREATE OR REPLACE TRIGGER Contrainte_C9_1 --- mettre meilleur nom!!!!!
-BEFORE INSERT OR DELETE OR UPDATE ON inscription
-FOR EACH ROW
-DECLARE
-  nbEtudiants INTEGER;
-BEGIN
-  SELECT COUNT(*) INTO nbEtudiants FROM inscription
-  WHERE dateAbandon IS NULL AND sigle = :NEW.sigle AND nogroupe = :NEW.nogroupe AND codesession = :NEW.codesession;
-END;
-/
-
+-- DBMS_OUTPUT.PUT_LINE('I got here:'||:new.col||' is the new value'); 
 
 select * from DUAL;
 
