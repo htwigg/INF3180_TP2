@@ -462,13 +462,21 @@ WHERE  codepermanent = 'TREJ18088001' AND
 
 -- ################################ C5 #########################################
 -- C5
-ALTER TABLE inscription DROP CONSTRAINT CERefGroupeCours -- Drop la contrainte d'origine
-; 
-ALTER TABLE inscription -- Création de la nouvelle contrainte 
-ADD CONSTRAINT Contrainte_C5 
-  FOREIGN KEY (sigle,noGroupe,codeSession) REFERENCES GroupeCours
-    ON DELETE CASCADE
-;
+--ALTER TABLE inscription DROP CONSTRAINT CERefGroupeCours -- Drop la contrainte d'origine
+--; 
+--ALTER TABLE inscription -- Création de la nouvelle contrainte 
+--ADD CONSTRAINT Contrainte_C5 
+--  FOREIGN KEY (sigle,noGroupe,codeSession) REFERENCES GroupeCours
+--    ON DELETE CASCADE
+--;
+CREATE OR REPLACE TRIGGER Contrainte_C5
+AFTER DELETE ON GroupeCours
+FOR EACH ROW
+BEGIN
+  DELETE FROM inscription
+  WHERE :OLD.sigle = sigle AND :OLD.nogroupe = nogroupe AND :OLD.codesession = codesession;
+END;
+/
 
 -- C5 -> Test A (Efface un groupecours et ses inscriptions correspondantes)
 DELETE FROM groupecours
