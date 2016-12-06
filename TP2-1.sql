@@ -577,7 +577,7 @@ ALTER TABLE groupecours
   ADD nbInscriptions INTEGER DEFAULT 0 
 ;
 
-CREATE OR REPLACE PROCEDURE MAJ_GroupeCours_Inscriptions AS
+CREATE OR REPLACE PROCEDURE SET_GroupeCours_nbInscriptions AS
   BEGIN
     FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
               FROM inscription 
@@ -591,15 +591,60 @@ CREATE OR REPLACE PROCEDURE MAJ_GroupeCours_Inscriptions AS
   END;
 /
 
-EXECUTE MAJ_GroupeCours_Inscriptions;
+EXECUTE SET_GroupeCours_nbInscriptions;
+select * from inscription; -- DEBUG
+select * from groupecours; -- DEBUG
+rollback; -- DEBUG
 
 
-SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions FROM inscription WHERE dateabandon IS NULL GROUP BY sigle, nogroupe, codesession
-;
-select * from inscription;
-select * from groupecours;
+CREATE OR REPLACE TRIGGER MAJ_GroupeCours_nbInscriptions
+AFTER INSERT OR DELETE OR UPDATE OF sigle, nogroupe, codesession ON inscription
+FOR EACH ROW
+BEGIN
+  IF DELETING THEN
+    UPDATE GroupeCours
+    SET    nbInscriptions = nbInscriptions - 1
+    WHERE  :OLD.sigle = sigle AND :OLD.nogroupe = nogroupe AND :OLD.codesession = codesession;
+  END IF;
+  
+  IF INSERTING THEN
+    UPDATE GroupeCours
+    SET    nbInscriptions = nbInscriptions + 1
+    WHERE  :NEW.sigle = sigle AND :NEW.nogroupe = nogroupe AND :NEW.codesession = codesession;
+  END IF;
+  
+  IF UPDATING AND :NEW.sigle != :OLD.sigle OR :NEW.nogroupe != :OLD.nogroupe OR :NEW.codesession != :OLD.codesession THEN
+    UPDATE GroupeCours
+    SET    nbInscriptions = nbInscriptions - 1
+    WHERE  :OLD.sigle = sigle AND :OLD.nogroupe = nogroupe AND :OLD.codesession = codesession;
+    
+    UPDATE GroupeCours
+    SET    nbInscriptions = nbInscriptions + 1
+    WHERE  :NEW.sigle = sigle AND :NEW.nogroupe = nogroupe AND :NEW.codesession = codesession;
+  END IF;
+END;
+/
 
-rollback;
+select * from inscription; -- DEBUG
+select * from groupecours; -- DEBUG
+delete from inscription where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
+INSERT INTO Inscription VALUES('TREJ18088001','INF1130',10,32003,'16/08/2003',null,70); -- DEBUG
+
+UPDATE inscription SET NOGROUPE = 30 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
+UPDATE inscription SET NOGROUPE = 10 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 30 AND CODESESSION = 32003; -- DEBUG
+
+rollback; -- DEBUG
+
+
+
+
+
+
+
+
+
+
+
 
 
 
