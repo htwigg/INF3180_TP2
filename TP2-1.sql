@@ -573,6 +573,76 @@ WHERE sigle = 'INF1130' AND
 
 -- ################################ C9 #########################################
 -- C9
+ALTER TABLE groupecours
+  ADD nbInscriptions INTEGER DEFAULT 0 
+;
+
+CREATE OR REPLACE PROCEDURE MAJ_GroupeCours_Inscriptions AS
+  BEGIN
+    FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
+              FROM inscription 
+              WHERE dateabandon IS NULL
+              GROUP BY sigle, nogroupe, codesession)
+    LOOP
+      UPDATE  GroupeCours
+      SET     nbInscriptions = i.nbInscriptions
+      WHERE   sigle = i.sigle AND nogroupe = i.nogroupe AND codesession = i.codesession;
+    END LOOP;
+  END;
+/
+
+EXECUTE MAJ_GroupeCours_Inscriptions;
+
+
+SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions FROM inscription WHERE dateabandon IS NULL GROUP BY sigle, nogroupe, codesession
+;
+select * from inscription;
+select * from groupecours;
+
+rollback;
+
+
+
+
+
+
+
+CREATE OR REPLACE TRIGGER Contrainte_C9_1 --- mettre meilleur nom!!!!!
+BEFORE INSERT OR DELETE OR UPDATE ON inscription
+FOR EACH ROW
+DECLARE
+  nbEtudiants INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO nbEtudiants FROM inscription
+  WHERE dateAbandon IS NULL AND sigle = :NEW.sigle AND nogroupe = :NEW.nogroupe AND codesession = :NEW.codesession;
+END;
+/
+
+
+select * from DUAL;
+
+UPDATE inscription
+SET note = note
+WHERE codepermanent = 'TREL14027801' AND
+      sigle = 'INF1130' AND
+      nogroupe = 30 AND
+      codesession = 32003
+;
+
+SELECT * FROM GROUPECOURS;
+
+--CREATE OR REPLACE TRIGGER Contrainte_C9
+--BEFORE INSERT OR DELETE OR UPDATE ON inscription
+--FOR EACH ROW
+--BEGIN
+--  IF (:NEW.note > (:OLD.note + 5)) THEN
+--    raise_application_error(-20071, 
+--      'Il est interdit de faire augmenter la valeur de la note de plus de 5% lors d''une mise à jour!');
+--  END IF;
+--END;
+--/
+
+
 
 -- C9 -> Test A
 
