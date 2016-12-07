@@ -494,7 +494,7 @@ WHERE  codesession = 32003 AND
 
 
 -- ################################ C6 #########################################
--- C6 Note: J'ai validé cette méthode avec Mme Sadat en classe.
+-- C6 -> Note: J'ai validé cette méthode avec Mme Sadat en classe.
 CREATE INDEX siglecodesession_index ON groupecours (sigle, codesession) -- Création index unique pour entrées déjà présentes
 ;
 ALTER TABLE groupecours
@@ -591,25 +591,12 @@ BEGIN
     WHERE   sigle = i.sigle AND nogroupe = i.nogroupe AND codesession = i.codesession;
   END LOOP;
   
-  -- Efface les groupecours avec moins de 5 étudiants ainsi que les inscriptions.
+  -- Efface les groupecours avec moins de 5 étudiants ainsi ses inscriptions.
   DELETE FROM groupecours where nbInscriptions < 5;
 END;
 /
 
-select * from etudiant;
-select * from inscription; -- DEBUG
-select * from groupecours; -- DEBUG
-
-
-UPDATE inscription SET NOGROUPE = 30 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
-UPDATE inscription SET NOGROUPE = 10 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 30 AND CODESESSION = 32003; -- DEBUG
-ROLLBACK;
-
-
-
-
-
--- C9 -> Test A - Ajout d'inscriptions pour avoir 2 groupecours avec 5 etudiants
+-- C9 -> Test A - Ajout d'inscriptions pour avoir 2 groupecours avec 5 etudiants inscrits
 INSERT ALL
   -- INF1130-10 Session: 32003
   INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
@@ -627,6 +614,10 @@ INSERT ALL
     VALUES ('LAVP08087001','INF3180',40,32003,'16/08/2003',null,70)
 SELECT 1 FROM DUAL;
 
+-- C9 -> Test A (Results) ... Il reste seulement 2 groupecours avec 5 inscriptions chacuns
+SELECT * FROM inscription;
+SELECT * FROM groupecours;
+
 -- C9 -> Test B - Un étudiant change de groupecours.. maintenant un seul groupe avec 6 etudiants
 UPDATE inscription
 SET    sigle = 'INF1130', nogroupe = 10
@@ -636,7 +627,9 @@ WHERE  codepermanent = 'LAVP08087001' AND
        codesession = 32003
 ;
 
-
+-- C9 -> Test B (Results) ... Il reste seulement 1 groupecours avec 6 inscriptions
+SELECT * FROM inscription;
+SELECT * FROM groupecours;
 
 COMMIT
 /
