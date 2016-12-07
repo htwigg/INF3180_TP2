@@ -462,21 +462,13 @@ WHERE  codepermanent = 'TREJ18088001' AND
 
 -- ################################ C5 #########################################
 -- C5
---ALTER TABLE inscription DROP CONSTRAINT CERefGroupeCours -- Drop la contrainte d'origine
---; 
---ALTER TABLE inscription -- Création de la nouvelle contrainte 
---ADD CONSTRAINT Contrainte_C5 
---  FOREIGN KEY (sigle,noGroupe,codeSession) REFERENCES GroupeCours
---    ON DELETE CASCADE
---;
-CREATE OR REPLACE TRIGGER Contrainte_C5
-AFTER DELETE ON GroupeCours
-FOR EACH ROW
-BEGIN
-  DELETE FROM inscription
-  WHERE :OLD.sigle = sigle AND :OLD.nogroupe = nogroupe AND :OLD.codesession = codesession;
-END;
-/
+ALTER TABLE inscription DROP CONSTRAINT CERefGroupeCours -- Drop la contrainte d'origine
+; 
+ALTER TABLE inscription -- Création de la nouvelle contrainte 
+ADD CONSTRAINT Contrainte_C5 
+  FOREIGN KEY (sigle,noGroupe,codeSession) REFERENCES GroupeCours
+    ON DELETE CASCADE
+;
 
 -- C5 -> Test A (Efface un groupecours et ses inscriptions correspondantes)
 DELETE FROM groupecours
@@ -582,137 +574,69 @@ WHERE sigle = 'INF1130' AND
 -- ################################ C9 #########################################
 -- C9
 ALTER TABLE groupecours
-  ADD nbInscriptions INTEGER DEFAULT 0 
+  ADD nbInscriptions INTEGER DEFAULT 0 -- Pour le nombre d'inscrits à un groupecours
 ;
-
-CREATE OR REPLACE PROCEDURE SET_GroupeCours_nbInscriptions AS
-  BEGIN
-    FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
-              FROM inscription 
-              WHERE dateabandon IS NULL
-              GROUP BY sigle, nogroupe, codesession)
-    LOOP
-      UPDATE  GroupeCours
-      SET     nbInscriptions = i.nbInscriptions
-      WHERE   sigle = i.sigle AND nogroupe = i.nogroupe AND codesession = i.codesession;
-    END LOOP;
-  END;
-/
-
-EXECUTE SET_GroupeCours_nbInscriptions;
-select * from inscription; -- DEBUG
-select * from groupecours; -- DEBUG
-rollback; -- DEBUG
-
-
-CREATE OR REPLACE TRIGGER MAJ_GroupeCours_nbInscriptions
-AFTER INSERT OR DELETE OR UPDATE OF sigle, nogroupe, codesession ON inscription
-FOR EACH ROW
-BEGIN
-  IF DELETING THEN
-    UPDATE GroupeCours
-    SET    nbInscriptions = nbInscriptions - 1
-    WHERE  :OLD.sigle = sigle AND :OLD.nogroupe = nogroupe AND :OLD.codesession = codesession;
-  END IF;
-  
-  IF INSERTING THEN
-    UPDATE GroupeCours
-    SET    nbInscriptions = nbInscriptions + 1
-    WHERE  :NEW.sigle = sigle AND :NEW.nogroupe = nogroupe AND :NEW.codesession = codesession;
-  END IF;
-  
-  IF UPDATING AND :NEW.sigle != :OLD.sigle OR :NEW.nogroupe != :OLD.nogroupe OR :NEW.codesession != :OLD.codesession THEN
-    UPDATE GroupeCours
-    SET    nbInscriptions = nbInscriptions - 1
-    WHERE  :OLD.sigle = sigle AND :OLD.nogroupe = nogroupe AND :OLD.codesession = codesession;
-    
-    UPDATE GroupeCours
-    SET    nbInscriptions = nbInscriptions + 1
-    WHERE  :NEW.sigle = sigle AND :NEW.nogroupe = nogroupe AND :NEW.codesession = codesession;
-  END IF;
-END;
-/
-
-select * from inscription; -- DEBUG
-select * from groupecours; -- DEBUG
-delete from inscription where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
-INSERT INTO Inscription VALUES('TREJ18088001','INF1130',10,32003,'16/08/2003',null,70); -- DEBUG
-UPDATE inscription SET NOGROUPE = 30 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
-UPDATE inscription SET NOGROUPE = 10 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 30 AND CODESESSION = 32003; -- DEBUG
-
-
 
 CREATE OR REPLACE TRIGGER Contrainte_C9
-BEFORE INSERT OR DELETE OR UPDATE ON inscription
-FOR EACH ROW
-DECLARE
-  nbEtudiants GroupeCours.nbInscriptions%type;
-  isValid boolean := true;
+AFTER INSERT OR UPDATE ON inscription
 BEGIN
-  IF INSERTING THEN
-    SELECT nbInscriptions INTO nbEtudiants FROM GroupeCours
-    WHERE sigle = :NEW.sigle AND nogroupe = :NEW.nogroupe AND codesession = :NEW.codesession;
-    
-    IF nbEtudiants < 5 THEN
-      DBMS_OUTPUT.PUT_LINE('Insertion refuse. Seulement ' || nbEtudiants || ' etudiants pour le cours '
-                            || :NEW.sigle ||'-' || :NEW.nogroupe || ' a la session ' || :NEW.codesession);
-      isValid := false;
-    END IF;
-  END IF;
+  -- MAJ le nbInscriptions pour les groupes
+  FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
+            FROM inscription 
+            WHERE dateabandon IS NULL
+            GROUP BY sigle, nogroupe, codesession)
+  LOOP
+    UPDATE  GroupeCours
+    SET     nbInscriptions = i.nbInscriptions
+    WHERE   sigle = i.sigle AND nogroupe = i.nogroupe AND codesession = i.codesession;
+  END LOOP;
   
-  IF isValid = false THEN
-    DELETE FROM GroupeCours WHERE sigle = :NEW.sigle AND nogroupe = :NEW.nogroupe AND codesession = :NEW.codesession;
-  END IF;
+  -- Efface les groupecours avec moins de 5 étudiants ainsi que les inscriptions.
+  DELETE FROM groupecours where nbInscriptions < 5;
 END;
 /
 
-
-
-
-delete from inscription where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
-INSERT INTO Inscription VALUES('TREJ18088001','INF1130',10,32003,'16/08/2003',null,70); -- DEBUG
+select * from etudiant;
 select * from inscription; -- DEBUG
 select * from groupecours; -- DEBUG
-rollback; -- DEBUG
+
+
+UPDATE inscription SET NOGROUPE = 30 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
+UPDATE inscription SET NOGROUPE = 10 where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 30 AND CODESESSION = 32003; -- DEBUG
+ROLLBACK;
 
 
 
 
 
+-- C9 -> Test A - Ajout d'inscriptions pour avoir 2 groupecours avec 5 etudiants
+INSERT ALL
+  -- INF1130-10 Session: 32003
+  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
+    VALUES ('DEGE10027801','INF1130',10,32003,'16/08/2003',null,70)
+  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note)
+    VALUES ('MONC05127201','INF1130',10,32003,'16/08/2003',null,70)
+  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note)
+    VALUES ('VANV05127201','INF1130',10,32003,'16/08/2003',null,70)
+  -- INF3180-40 Session: 32003
+  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
+    VALUES ('TREJ18088001','INF3180',40,32003,'16/08/2003',null,70)
+  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
+    VALUES ('TREL14027801','INF3180',40,32003,'16/08/2003',null,70)
+  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
+    VALUES ('LAVP08087001','INF3180',40,32003,'16/08/2003',null,70)
+SELECT 1 FROM DUAL;
 
-
-
-
--- DBMS_OUTPUT.PUT_LINE('I got here:'||:new.col||' is the new value'); 
-
-select * from DUAL;
-
+-- C9 -> Test B - Un étudiant change de groupecours.. maintenant un seul groupe avec 6 etudiants
 UPDATE inscription
-SET note = note
-WHERE codepermanent = 'TREL14027801' AND
-      sigle = 'INF1130' AND
-      nogroupe = 30 AND
-      codesession = 32003
+SET    sigle = 'INF1130', nogroupe = 10
+WHERE  codepermanent = 'LAVP08087001' AND
+       sigle = 'INF3180' AND
+       nogroupe = 40 AND
+       codesession = 32003
 ;
 
-SELECT * FROM GROUPECOURS;
 
---CREATE OR REPLACE TRIGGER Contrainte_C9
---BEFORE INSERT OR DELETE OR UPDATE ON inscription
---FOR EACH ROW
---BEGIN
---  IF (:NEW.note > (:OLD.note + 5)) THEN
---    raise_application_error(-20071, 
---      'Il est interdit de faire augmenter la valeur de la note de plus de 5% lors d''une mise à jour!');
---  END IF;
---END;
---/
-
-
-
--- C9 -> Test A
-
--- C9 -> Test B
 
 COMMIT
 /
