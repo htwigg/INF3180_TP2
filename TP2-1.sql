@@ -591,7 +591,7 @@ BEGIN
     WHERE   sigle = i.sigle AND nogroupe = i.nogroupe AND codesession = i.codesession;
   END LOOP;
   
-  -- Efface les groupecours avec moins de 5 étudiants ainsi ses inscriptions.
+  -- Efface les groupecours avec moins de 5 étudiants ainsi que ses inscriptions.
   DELETE FROM groupecours where nbInscriptions < 5;
 END;
 /
