@@ -400,7 +400,8 @@ WHERE  sigle = 'INF1110' AND
 -- 2.4.3
 SELECT * 
 FROM   inscription
-WHERE  sigle = 'INF1110' AND
+WHERE  note IS NOT NULL AND
+       sigle = 'INF1110' AND
        nogroupe = 20 AND
        codesession = 32003
 ;
