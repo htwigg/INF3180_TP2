@@ -366,7 +366,7 @@ SELECT * FROM MoyenneParGroupeParSession
 
 
 -- ################################ 2.3 ########################################
-CREATE OR REPLACE TRIGGER Contrainte_23
+CREATE OR REPLACE TRIGGER Demande_23
 INSTEAD OF UPDATE ON MoyenneParGroupeParSession
 FOR EACH ROW
 BEGIN
