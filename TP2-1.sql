@@ -574,13 +574,13 @@ WHERE sigle = 'INF1130' AND
 -- ################################ C9 #########################################
 -- C9
 ALTER TABLE groupecours
-  ADD nbInscriptions INTEGER DEFAULT 0 -- Pour le nombre d'inscrits à un groupecours
+  ADD nbInscriptions INTEGER DEFAULT 0 -- Pour le nombre d'inscriptions à un groupecours
 ;
 
 CREATE OR REPLACE TRIGGER Contrainte_C9
 AFTER INSERT OR UPDATE ON inscription
 BEGIN
-  -- MAJ le nbInscriptions pour les groupes
+  -- MAJ le nbInscriptions pour les groupecours
   FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
             FROM inscription 
             WHERE dateabandon IS NULL
