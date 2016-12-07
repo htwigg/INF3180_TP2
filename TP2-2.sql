@@ -425,25 +425,44 @@ END LibreEnseignement;
 /
 
 
+-- ################################ 3.2 ########################################
 CREATE OR REPLACE PROCEDURE TacheProfesseur
-(codeProf IN groupecours.codeprofesseur%TYPE)
+(codeProf IN groupecours.codeprofesseur%TYPE,
+ codeSess IN groupecours.codesession%TYPE)
 IS
-  test BOOLEAN;  
+  siglesStr     VARCHAR(32767);
+  noGroupesStr  VARCHAR(32767);
 BEGIN
-  test := LibreEnseignement(codeProf, 32003);
-  --if (LibreEnseignement(codeProf, 32003)) then
-  if (test) then
-    DBMS_OUTPUT.PUT_LINE('Disponible');
-  else 
-    DBMS_OUTPUT.PUT_LINE('Pas disponible');
-  end if;
+  IF (LibreEnseignement(codeProf, codeSess)) THEN
+    DBMS_OUTPUT.PUT_LINE('Professeur ' || codeProf || 
+                ' est disponible pendant la session ' || codeSess || '.');
+  ELSE 
+    FOR i IN (SELECT sigle, nogroupe
+              FROM   GroupeCours
+              WHERE  codeprofesseur = codeProf AND codesession = codeSess)
+    LOOP
+      siglesStr := siglesStr || i.sigle || ', ';
+      noGroupesStr := noGroupesStr || i.nogroupe || ', ';
+    END LOOP;
+    
+    -- Retire virgule et espace en trop avant l'affichage
+    siglesStr := SUBSTR(siglesStr, 1, LENGTH(siglesStr) - 2);
+    noGroupesStr := SUBSTR(noGroupesStr, 1, LENGTH(noGroupesStr) - 2);
+    
+    DBMS_OUTPUT.PUT_LINE('Professeur ' || codeProf || ' enseigne les cours ' || siglesStr || 
+                ' pendant la session ' || codeSess || ' pour les groupes ' || noGroupesStr || '.');
+  END IF;
 END;
 /
 
- -- Disponible
-EXECUTE TacheProfesseur('SAUV5');
+
+-- ################################ 3.3 ########################################
+-- Disponible
+EXECUTE TacheProfesseur('SAUV5', 32003);
 -- Pas Disponible
-EXECUTE TacheProfesseur('TREJ4'); 
+EXECUTE TacheProfesseur('TREJ4', 32003);
+-- Prof qui n'existe pas
+EXECUTE TacheProfesseur('ABCD7', 32003); 
 
 
 COMMIT
