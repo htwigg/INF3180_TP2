@@ -351,23 +351,21 @@ SELECT * FROM Inscription
 -- ************************** Debut du TP2-2 ***********************************
 -- *****************************************************************************
 
--- ################################ 2.1 #########################################
+-- ################################ 2.1 ########################################
 CREATE OR REPLACE VIEW MoyenneParGroupeParSession (sigle, nogroupe, codesession, MoyenneGroupe) AS
 SELECT    sigle, nogroupe, codesession, AVG(note) AS MoyenneGroupe
 FROM      inscription
 GROUP BY  sigle, nogroupe, codesession
-ORDER BY  codesession, sigle, nogroupe -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! PAS DEMANDÉ, A RETIRER AVANT REMISE!!!!!!!
+ORDER BY  codesession, sigle, nogroupe -- Pas demandé, mais plus lisible
 ;
 
 
--- ################################ 2.2 #########################################
+-- ################################ 2.2 ########################################
 SELECT * FROM MoyenneParGroupeParSession
 ;
 
---SELECT * FROM INSCRIPTION ORDER BY codesession, sigle, nogroupe; --- !!!!!!!!!!!!!!!!!!!!!!!!!TO DELETE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-
--- ################################ 2.3 #########################################
+-- ################################ 2.3 ########################################
 CREATE OR REPLACE TRIGGER Contrainte_23
 INSTEAD OF UPDATE ON MoyenneParGroupeParSession
 FOR EACH ROW
@@ -381,7 +379,8 @@ BEGIN
 END;
 /
 
--- ################################ 2.4 #########################################
+
+-- ################################ 2.4 ########################################
 -- 2.4.1
 UPDATE MoyenneParGroupeParSession
 SET    moyennegroupe = moyennegroupe + 10
@@ -407,7 +406,7 @@ WHERE  sigle = 'INF1110' AND
 ;
 
 
--- ################################ 3.1 #########################################
+-- ################################ 3.1 ########################################
 CREATE OR REPLACE FUNCTION LibreEnseignement (
    codeProf IN groupecours.codeprofesseur%TYPE,
    codeSess IN groupecours.codesession%TYPE
