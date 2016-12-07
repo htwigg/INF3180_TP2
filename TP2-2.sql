@@ -408,23 +408,42 @@ WHERE  note IS NOT NULL AND
 
 
 -- ################################ 3.1 ########################################
-CREATE OR REPLACE FUNCTION LibreEnseignement (
-   codeProf IN groupecours.codeprofesseur%TYPE,
-   codeSess IN groupecours.codesession%TYPE
-   ) RETURN BOOLEAN
+CREATE OR REPLACE FUNCTION LibreEnseignement
+(codeProf IN groupecours.codeprofesseur%TYPE,
+ codeSess IN groupecours.codesession%TYPE
+) RETURN BOOLEAN
 IS
-  -- needed var goes here   
+  countCours   INTEGER;
 BEGIN
-  --IF (COUNT VALUE == 0) THEN
-    -- RETURN TRUE;
-  --ELSE
-    -- RETURN FALSE;
-  -- END IF;
-  RETURN FALSE;
+  SELECT COUNT(*)
+  INTO   countCours
+  FROM   GroupeCours
+  WHERE  codeprofesseur = codeProf AND codesession = codeSess;
+  
+  RETURN (countCours = 0);
 END LibreEnseignement;
 /
-   
 
+
+CREATE OR REPLACE PROCEDURE TacheProfesseur
+(codeProf IN groupecours.codeprofesseur%TYPE)
+IS
+  test BOOLEAN;  
+BEGIN
+  test := LibreEnseignement(codeProf, 32003);
+  --if (LibreEnseignement(codeProf, 32003)) then
+  if (test) then
+    DBMS_OUTPUT.PUT_LINE('Disponible');
+  else 
+    DBMS_OUTPUT.PUT_LINE('Pas disponible');
+  end if;
+END;
+/
+
+ -- Disponible
+EXECUTE TacheProfesseur('SAUV5');
+-- Pas Disponible
+EXECUTE TacheProfesseur('TREJ4'); 
 
 
 COMMIT
