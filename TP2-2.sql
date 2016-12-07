@@ -352,13 +352,12 @@ SELECT * FROM Inscription
 -- *****************************************************************************
 
 -- ################################ 2.1 #########################################
-CREATE VIEW MoyenneParGroupeParSession (sigle, nogroupe, codesession, MoyenneGroupe) AS
+CREATE OR REPLACE VIEW MoyenneParGroupeParSession (sigle, nogroupe, codesession, MoyenneGroupe) AS
 SELECT    sigle, nogroupe, codesession, AVG(note) AS MoyenneGroupe
 FROM      inscription
 GROUP BY  sigle, nogroupe, codesession
 ORDER BY  codesession, sigle, nogroupe -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! PAS DEMANDÉ, A RETIRER AVANT REMISE!!!!!!!
 ;
---DROP VIEW MoyenneParGroupeParSession;  -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! A RETIRER AVANT REMISE!!!!!!!!!!!!!!!!!!!!
 
 
 -- ################################ 2.2 #########################################
