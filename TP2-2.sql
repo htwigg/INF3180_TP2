@@ -426,50 +426,65 @@ END LibreEnseignement;
 
 
 -- ################################ 3.2 ########################################
-CREATE OR REPLACE PROCEDURE TacheProfesseur
+-- Sous procedure pour l'affichage des groupecours d'un prof pour une session
+CREATE OR REPLACE PROCEDURE AfficheTachesSession
 (codeProf IN groupecours.codeprofesseur%TYPE,
  codeSess IN groupecours.codesession%TYPE)
 IS
   siglesStr     VARCHAR(32767);
   noGroupesStr  VARCHAR(32767);
 BEGIN
-  IF (LibreEnseignement(codeProf, codeSess)) THEN
-    DBMS_OUTPUT.PUT_LINE('Professeur ' || codeProf || 
-                ' est disponible pendant la session ' || codeSess || '.');
-  ELSE 
-    FOR i IN (SELECT sigle, nogroupe
-              FROM   GroupeCours
-              WHERE  codeprofesseur = codeProf AND codesession = codeSess)
+  FOR i IN (SELECT sigle, nogroupe
+            FROM   GroupeCours
+            WHERE  codeprofesseur = codeProf AND codesession = codeSess)
+  LOOP
+    siglesStr := siglesStr || i.sigle || ', ';
+    noGroupesStr := noGroupesStr || i.nogroupe || ', ';
+  END LOOP;
+
+  -- Retire virgule et espace en trop avant l'affichage
+  siglesStr := SUBSTR(siglesStr, 1, LENGTH(siglesStr) - 2);
+  noGroupesStr := SUBSTR(noGroupesStr, 1, LENGTH(noGroupesStr) - 2);
+  
+  DBMS_OUTPUT.PUT_LINE('Professeur ' || codeProf || ' enseigne les cours ' || siglesStr || 
+            ' pendant la session ' || codeSess || ' pour les groupes ' || noGroupesStr || '.');
+END;
+/
+
+-- Procedure principale demande dans l'enonce
+CREATE OR REPLACE PROCEDURE TacheProfesseur
+(codeProf IN groupecours.codeprofesseur%TYPE)
+IS
+  isExistingProf INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO isExistingProf FROM professeur WHERE codeprofesseur = codeProf;
+
+  IF (isExistingProf = 0) THEN
+    DBMS_OUTPUT.PUT_LINE('Professeur ' || codeProf || ' n''existe pas dans la table professeur.');
+  ELSE
+    FOR i IN (SELECT codesession FROM sessionuqam)
     LOOP
-      siglesStr := siglesStr || i.sigle || ', ';
-      noGroupesStr := noGroupesStr || i.nogroupe || ', ';
+      IF (LibreEnseignement(codeProf, i.codesession)) THEN
+        DBMS_OUTPUT.PUT_LINE('Professeur ' || codeProf || 
+                  ' est disponible pendant la session ' || i.codesession || '.');
+      ELSE
+        AfficheTachesSession(codeProf, i.codesession);
+      END IF;
     END LOOP;
-    
-    -- Retire virgule et espace en trop avant l'affichage
-    siglesStr := SUBSTR(siglesStr, 1, LENGTH(siglesStr) - 2);
-    noGroupesStr := SUBSTR(noGroupesStr, 1, LENGTH(noGroupesStr) - 2);
-    
-    DBMS_OUTPUT.PUT_LINE('Professeur ' || codeProf || ' enseigne les cours ' || siglesStr || 
-                ' pendant la session ' || codeSess || ' pour les groupes ' || noGroupesStr || '.');
   END IF;
 END;
 /
 
 
 -- ################################ 3.3 ########################################
--- Disponible
-EXECUTE TacheProfesseur('SAUV5', 32003);
--- Pas Disponible
-EXECUTE TacheProfesseur('TREJ4', 32003);
--- Prof qui n'existe pas
-EXECUTE TacheProfesseur('ABCD7', 32003); 
+-- Test prof disponible
+EXECUTE TacheProfesseur('SAUV5');
+-- Test prof pas disponible
+EXECUTE TacheProfesseur('TREJ4');
+-- Test prof qui n'existe pas
+EXECUTE TacheProfesseur('ABCD7'); 
 
 
 COMMIT
 /
-
-
-
-
-
 
