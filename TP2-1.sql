@@ -577,41 +577,151 @@ ALTER TABLE groupecours
   ADD nbInscriptions INTEGER DEFAULT 0 -- Pour le nombre d'inscriptions à un groupecours
 ;
 
-CREATE OR REPLACE TRIGGER Contrainte_C9
-AFTER INSERT OR UPDATE ON inscription
+
+-- Table temporaire pour contourner table mutante
+CREATE GLOBAL TEMPORARY TABLE c9_tmp ( 
+  sigle 		       CHAR(7)  	NOT NULL,
+  noGroupe	       INTEGER		NOT NULL,
+  codeSession	     INTEGER		NOT NULL
+) ON COMMIT DELETE ROWS;
+
+
+-- Procedure de mise à jour de nbInscriptions pour les donnes existantes
+CREATE OR REPLACE PROCEDURE SET_GroupeCours_nbInscriptions AS
+  BEGIN
+    FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
+              FROM inscription 
+              WHERE dateabandon IS NULL
+              GROUP BY sigle, nogroupe, codesession)
+    LOOP
+      UPDATE  GroupeCours
+      SET     nbInscriptions = i.nbInscriptions
+      WHERE   sigle = i.sigle AND nogroupe = i.nogroupe AND codesession = i.codesession;
+    END LOOP;
+  END;
+/
+-- Execution de la procedure une seule fois
+EXECUTE SET_GroupeCours_nbInscriptions;
+
+
+-- Trigger pour gestion nbInscriptions et ajout des operations à la table temporaire
+CREATE OR REPLACE TRIGGER Contrainte_C9_A
+BEFORE INSERT OR DELETE OR UPDATE ON inscription
+FOR EACH ROW
+DECLARE
+  isExisting INTEGER;
 BEGIN
-  -- MAJ le nbInscriptions pour les groupecours
-  FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
-            FROM inscription 
-            WHERE dateabandon IS NULL
-            GROUP BY sigle, nogroupe, codesession)
-  LOOP
-    UPDATE  GroupeCours
-    SET     nbInscriptions = i.nbInscriptions
-    WHERE   sigle = i.sigle AND nogroupe = i.nogroupe AND codesession = i.codesession;
-  END LOOP;
-  
-  -- Efface les groupecours avec moins de 5 étudiants ainsi que ses inscriptions.
-  DELETE FROM groupecours where nbInscriptions < 5;
+  IF INSERTING OR UPDATING THEN
+    SELECT COUNT(*) INTO isExisting 
+    FROM C9_TMP 
+    WHERE sigle = :NEW.sigle 
+      AND nogroupe = :NEW.nogroupe
+      AND codesession = :NEW.codesession;
+    
+    IF (isExisting = 0) THEN -- Si != 0, alors l'appel a ce trigger est recursif. Ne rien faire
+      INSERT INTO c9_tmp VALUES(:NEW.sigle, :NEW.nogroupe, :NEW.codesession);
+      
+      IF INSERTING THEN 
+        UPDATE GroupeCours -- Ajoute un étudiant pour ce groupecours
+        SET    nbInscriptions = nbInscriptions + 1
+        WHERE  :NEW.sigle = sigle 
+           AND :NEW.nogroupe = nogroupe
+           AND :NEW.codesession = codesession;
+      END IF;
+        
+      IF UPDATING AND :NEW.sigle != :OLD.sigle 
+                   OR :NEW.nogroupe != :OLD.nogroupe 
+                   OR :NEW.codesession != :OLD.codesession THEN
+        UPDATE GroupeCours -- Retire l'etudiant de l'ancien groupecours
+        SET    nbInscriptions = nbInscriptions - 1
+        WHERE  :OLD.sigle = sigle 
+           AND :OLD.nogroupe = nogroupe 
+           AND :OLD.codesession = codesession;
+
+        UPDATE GroupeCours -- Ajoute l'etudiant au nouveau groupecours
+        SET    nbInscriptions = nbInscriptions + 1
+        WHERE  :NEW.sigle = sigle 
+           AND :NEW.nogroupe = nogroupe 
+           AND :NEW.codesession = codesession;
+      END IF;
+    END IF;
+  ELSE -- DELETING
+    SELECT COUNT(*) INTO isExisting 
+    FROM C9_TMP 
+    WHERE sigle = :OLD.sigle 
+      AND nogroupe = :OLD.nogroupe 
+      AND codesession = :OLD.codesession;
+    
+    IF (isExisting = 0) THEN
+      INSERT INTO c9_tmp VALUES(:OLD.sigle, :OLD.nogroupe, :OLD.codesession);
+      UPDATE GroupeCours -- Retire un etudiant pour ce groupecours
+      SET    nbInscriptions = nbInscriptions - 1 
+      WHERE  :OLD.sigle = sigle 
+         AND :OLD.nogroupe = nogroupe 
+         AND :OLD.codesession = codesession;
+    END IF;
+  END IF;
 END;
 /
 
--- C9 -> Test A - Ajout d'inscriptions pour avoir 2 groupecours avec 5 etudiants inscrits
+
+-- Valide que les operations presentes dans la table temporaire respectes l'enonce
+CREATE OR REPLACE TRIGGER Contrainte_C9_B
+AFTER INSERT OR DELETE OR UPDATE ON inscription
+DECLARE
+  nbEtudiants GroupeCours.nbInscriptions%type;
+  isExisting INTEGER;
+BEGIN
+  FOR i IN (SELECT * FROM c9_tmp)
+  LOOP
+    SELECT COUNT(*) INTO isExisting
+    FROM groupecours 
+    WHERE sigle = i.sigle 
+      AND nogroupe = i.nogroupe
+      AND codesession = i.codesession;
+  
+    IF (isExisting != 0) THEN -- Si != 0, alors l'appel a ce trigger est recursif. Ne rien faire
+      SET_GroupeCours_nbInscriptions();
+      
+      SELECT nbInscriptions INTO nbEtudiants -- Recupere nbInscriptions pour ce groupecours
+      FROM GroupeCours
+      WHERE sigle = i.sigle
+        AND nogroupe = i.nogroupe
+        AND codesession = i.codesession;
+      
+      IF (nbEtudiants < 5) THEN
+        DELETE FROM groupecours 
+        WHERE sigle = i.sigle 
+          AND nogroupe = i.nogroupe
+          AND codesession = i.codesession;
+      END IF;
+    END IF;
+  END LOOP;
+END;
+/
+
+
+
+
+delete from inscription where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
+INSERT INTO Inscription VALUES('TREJ18088001','INF1130',10,32003,'16/08/2003',null,70); -- DEBUG
+
+INSERT INTO Inscription VALUES('DEGE10027801','INF1130',10,32003,'16/08/2003',null,70); -- DEBUG
+select * from inscription; -- DEBUG
+select * from groupecours; -- DEBUG
+SELECT * FROM C9_TMP; 
+rollback; -- DEBUG
+commit;
+
+
+-- C9 -> Test A - Ajout pour avoir 5 etudiants inscrits pour ce groupecours
 INSERT ALL
-  -- INF1130-10 Session: 32003
   INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
     VALUES ('DEGE10027801','INF1130',10,32003,'16/08/2003',null,70)
   INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note)
     VALUES ('MONC05127201','INF1130',10,32003,'16/08/2003',null,70)
   INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note)
     VALUES ('VANV05127201','INF1130',10,32003,'16/08/2003',null,70)
-  -- INF3180-40 Session: 32003
-  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
-    VALUES ('TREJ18088001','INF3180',40,32003,'16/08/2003',null,70)
-  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
-    VALUES ('TREL14027801','INF3180',40,32003,'16/08/2003',null,70)
-  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
-    VALUES ('LAVP08087001','INF3180',40,32003,'16/08/2003',null,70)
 SELECT 1 FROM DUAL;
 
 -- C9 -> Test A (Results) ... Il reste seulement 2 groupecours avec 5 inscriptions chacuns
