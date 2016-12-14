@@ -591,36 +591,35 @@ CREATE OR REPLACE TRIGGER Contrainte_C9_A
 BEFORE INSERT OR DELETE OR UPDATE ON inscription
 FOR EACH ROW
 DECLARE
+  sigleTmp GroupeCours.sigle%type;
+  nogroupeTmp GroupeCours.nogroupe%type;
+  codesessionTmp GroupeCours.codesession%type;
   isExisting INTEGER;
 BEGIN
   IF INSERTING OR UPDATING THEN
-    SELECT COUNT(*) INTO isExisting 
-    FROM C9_TMP 
-    WHERE sigle = :NEW.sigle 
-      AND nogroupe = :NEW.nogroupe
-      AND codesession = :NEW.codesession;
-    
-    IF (isExisting = 0) THEN -- Si != 0, alors l'appel a ce trigger est recursif. Ne rien faire
-      INSERT INTO c9_tmp VALUES(:NEW.sigle, :NEW.nogroupe, :NEW.codesession);
-    END IF;
+    sigleTmp := :NEW.sigle;
+    nogroupeTmp := :NEW.nogroupe;
+    codesessionTmp := :NEW.codesession;
+  ELSE
+    sigleTmp := :OLD.sigle;
+    nogroupeTmp := :OLD.nogroupe;
+    codesessionTmp := :OLD.codesession;
   END IF;
   
-  IF DELETING THEN
-    SELECT COUNT(*) INTO isExisting 
+  SELECT COUNT(*) INTO isExisting -- Cherche si present dans table temporaire
     FROM C9_TMP 
-    WHERE sigle = :OLD.sigle 
-      AND nogroupe = :OLD.nogroupe 
-      AND codesession = :OLD.codesession;
-    
-    IF (isExisting = 0) THEN
-      INSERT INTO c9_tmp VALUES(:OLD.sigle, :OLD.nogroupe, :OLD.codesession);
-    END IF;
+    WHERE sigle = sigleTmp 
+      AND nogroupe = nogroupeTmp
+      AND codesession = codesessionTmp;
+  
+  IF (isExisting = 0) THEN -- Si present, alors l'appel a ce trigger est recursif. Ne rien faire
+      INSERT INTO c9_tmp VALUES(sigleTmp, nogroupeTmp, codesessionTmp);
   END IF;
 END;
 /
 
 
--- Procedure de mise à jour de nbInscriptions pour les donnes existantes
+-- Procedure de mise à jour de nbInscriptions
 CREATE OR REPLACE PROCEDURE SET_GroupeCours_nbInscriptions AS
   BEGIN
     FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
@@ -645,13 +644,13 @@ DECLARE
 BEGIN
   FOR i IN (SELECT * FROM c9_tmp)
   LOOP
-    SELECT COUNT(*) INTO isExisting
+    SELECT COUNT(*) INTO isExisting -- Cherche si present dans table temporaire
     FROM groupecours 
     WHERE sigle = i.sigle 
       AND nogroupe = i.nogroupe
       AND codesession = i.codesession;
   
-    IF (isExisting != 0) THEN -- Si != 0, alors l'appel a ce trigger est recursif. Ne rien faire
+    IF (isExisting != 0) THEN -- Si present, alors l'appel a ce trigger est recursif. Ne rien faire
       SET_GroupeCours_nbInscriptions();
       
       SELECT nbInscriptions INTO nbEtudiants -- Recupere nbInscriptions pour ce groupecours
