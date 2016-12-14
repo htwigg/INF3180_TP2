@@ -586,24 +586,6 @@ CREATE GLOBAL TEMPORARY TABLE c9_tmp (
 ) ON COMMIT DELETE ROWS;
 
 
--- Procedure de mise à jour de nbInscriptions pour les donnes existantes
-CREATE OR REPLACE PROCEDURE SET_GroupeCours_nbInscriptions AS
-  BEGIN
-    FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
-              FROM inscription 
-              WHERE dateabandon IS NULL
-              GROUP BY sigle, nogroupe, codesession)
-    LOOP
-      UPDATE  GroupeCours
-      SET     nbInscriptions = i.nbInscriptions
-      WHERE   sigle = i.sigle AND nogroupe = i.nogroupe AND codesession = i.codesession;
-    END LOOP;
-  END;
-/
--- Execution de la procedure une seule fois
-EXECUTE SET_GroupeCours_nbInscriptions;
-
-
 -- Trigger pour gestion nbInscriptions et ajout des operations à la table temporaire
 CREATE OR REPLACE TRIGGER Contrainte_C9_A
 BEFORE INSERT OR DELETE OR UPDATE ON inscription
@@ -620,32 +602,10 @@ BEGIN
     
     IF (isExisting = 0) THEN -- Si != 0, alors l'appel a ce trigger est recursif. Ne rien faire
       INSERT INTO c9_tmp VALUES(:NEW.sigle, :NEW.nogroupe, :NEW.codesession);
-      
-      IF INSERTING THEN 
-        UPDATE GroupeCours -- Ajoute un étudiant pour ce groupecours
-        SET    nbInscriptions = nbInscriptions + 1
-        WHERE  :NEW.sigle = sigle 
-           AND :NEW.nogroupe = nogroupe
-           AND :NEW.codesession = codesession;
-      END IF;
-        
-      IF UPDATING AND :NEW.sigle != :OLD.sigle 
-                   OR :NEW.nogroupe != :OLD.nogroupe 
-                   OR :NEW.codesession != :OLD.codesession THEN
-        UPDATE GroupeCours -- Retire l'etudiant de l'ancien groupecours
-        SET    nbInscriptions = nbInscriptions - 1
-        WHERE  :OLD.sigle = sigle 
-           AND :OLD.nogroupe = nogroupe 
-           AND :OLD.codesession = codesession;
-
-        UPDATE GroupeCours -- Ajoute l'etudiant au nouveau groupecours
-        SET    nbInscriptions = nbInscriptions + 1
-        WHERE  :NEW.sigle = sigle 
-           AND :NEW.nogroupe = nogroupe 
-           AND :NEW.codesession = codesession;
-      END IF;
     END IF;
-  ELSE -- DELETING
+  END IF;
+  
+  IF DELETING THEN
     SELECT COUNT(*) INTO isExisting 
     FROM C9_TMP 
     WHERE sigle = :OLD.sigle 
@@ -654,14 +614,25 @@ BEGIN
     
     IF (isExisting = 0) THEN
       INSERT INTO c9_tmp VALUES(:OLD.sigle, :OLD.nogroupe, :OLD.codesession);
-      UPDATE GroupeCours -- Retire un etudiant pour ce groupecours
-      SET    nbInscriptions = nbInscriptions - 1 
-      WHERE  :OLD.sigle = sigle 
-         AND :OLD.nogroupe = nogroupe 
-         AND :OLD.codesession = codesession;
     END IF;
   END IF;
 END;
+/
+
+
+-- Procedure de mise à jour de nbInscriptions pour les donnes existantes
+CREATE OR REPLACE PROCEDURE SET_GroupeCours_nbInscriptions AS
+  BEGIN
+    FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
+              FROM inscription 
+              WHERE dateabandon IS NULL
+              GROUP BY sigle, nogroupe, codesession)
+    LOOP
+      UPDATE  GroupeCours
+      SET     nbInscriptions = i.nbInscriptions
+      WHERE   sigle = i.sigle AND nogroupe = i.nogroupe AND codesession = i.codesession;
+    END LOOP;
+  END;
 /
 
 
