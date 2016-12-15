@@ -671,6 +671,48 @@ END;
 /
 
 
+-- C9 -> Test A (Ajout d'un lot de 3 etudiants au groupecours INF1130-10 a la session 32003)
+INSERT ALL
+  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
+    VALUES ('DEGE10027801','INF1130',10,32003,'16/08/2003',null,70)
+  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note)
+    VALUES ('MONC05127201','INF1130',10,32003,'16/08/2003',null,70)
+  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note)
+    VALUES ('VANV05127201','INF1130',10,32003,'16/08/2003',null,70)
+SELECT 1 FROM DUAL;
+COMMIT;
+
+-- C9 -> Test A Results (... le groupecours INF1130 contient maintenant 5 etudiants)
+SELECT * FROM inscription WHERE sigle = 'INF1130' AND nogroupe = 10 AND codesession = 32003;
+SELECT * FROM groupecours WHERE sigle = 'INF1130' AND nogroupe = 10 AND codesession = 32003;
+
+
+-- C9 -> Test B (Un etudiant abandonne INF1130-10 a la session 32003)
+DELETE FROM inscription
+WHERE codepermanent = 'TREJ18088001' 
+  AND sigle = 'INF1130' 
+  AND nogroupe = 10 
+  AND codesession = 32003;
+COMMIT;
+
+-- C9 -> Test B Results (... maintenant 4 etudiants donc le groupecours est supprime)
+SELECT * FROM inscription WHERE sigle = 'INF1130' AND nogroupe = 10 AND codesession = 32003;
+SELECT * FROM groupecours WHERE sigle = 'INF1130' AND nogroupe = 10 AND codesession = 32003;
+
+
+-- C9 -> Test C (Un etudiant change de groupecours XXXXXXX..)
+UPDATE inscription
+SET    sigle = 'INF1130', nogroupe = 10
+WHERE  codepermanent = 'LAVP08087001' AND
+       sigle = 'INF3180' AND
+       nogroupe = 40 AND
+       codesession = 32003
+;
+-- -> Test C Results (... groupe de depart et de destination avec moins de 5 etudiants sont supprimes)
+
+
+-- C9 -> Test D (Un etudiant s'inscrit à un groupecours avec moins de 4 etudiants...)
+-- C9 -> Test D Results (... ce groupecours XXXX est supprime)
 
 
 delete from inscription where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
@@ -682,40 +724,6 @@ select * from groupecours; -- DEBUG
 SELECT * FROM C9_TMP; 
 rollback; -- DEBUG
 commit;
-
-
--- C9 -> Test A (Ajout de 3 etudiants au groupecours INF1130-10 a la session 32003)
-INSERT ALL
-  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note) 
-    VALUES ('DEGE10027801','INF1130',10,32003,'16/08/2003',null,70)
-  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note)
-    VALUES ('MONC05127201','INF1130',10,32003,'16/08/2003',null,70)
-  INTO Inscription (codepermanent, sigle, nogroupe, codesession, dateinscription, dateabandon, note)
-    VALUES ('VANV05127201','INF1130',10,32003,'16/08/2003',null,70)
-SELECT 1 FROM DUAL;
-
--- C9 -> Test A (Results ... le groupecours INF1130 contient maintenant 5 etudiants)
-SELECT * FROM inscription WHERE sigle = 'INF1130' AND nogroupe = 10 AND codesession = 32003;
-SELECT * FROM groupecours WHERE sigle = 'INF1130' AND nogroupe = 10 AND codesession = 32003;
-
--- C9 -> Test B (Un etudiant abandonne INF1130-10 a la session 32003)
--- C9 -> Test B (Results ... maintenant 4 etudiants donc le groupecours est supprime)
-
-
--- C9 -> Test C (Un etudiant change de groupecours XXXXXXX..)
-UPDATE inscription
-SET    sigle = 'INF1130', nogroupe = 10
-WHERE  codepermanent = 'LAVP08087001' AND
-       sigle = 'INF3180' AND
-       nogroupe = 40 AND
-       codesession = 32003
-;
--- -> Test C (Results ... groupe de depart et de destination avec moins de 5 etudiants sont supprimes)
-
-
--- C9 -> Test D (Un etudiant s'inscrit à un groupecours avec moins de 4 etudiants...)
--- C9 -> Test D (Results ... ce groupecours XXXX est supprime)
-
 
 
 
