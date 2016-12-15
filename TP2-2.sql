@@ -485,6 +485,3 @@ EXECUTE TacheProfesseur('TREJ4');
 EXECUTE TacheProfesseur('ABCD7'); 
 
 
-COMMIT
-/
-
