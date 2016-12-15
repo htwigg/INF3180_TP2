@@ -700,36 +700,27 @@ SELECT * FROM inscription WHERE sigle = 'INF1130' AND nogroupe = 10 AND codesess
 SELECT * FROM groupecours WHERE sigle = 'INF1130' AND nogroupe = 10 AND codesession = 32003;
 
 
--- C9 -> Test C (Un etudiant change de groupecours XXXXXXX..)
+-- C9 -> Test C (Un etudiant change de groupe pour le groupecours INF3180 a la session 32003)
 UPDATE inscription
-SET    sigle = 'INF1130', nogroupe = 10
-WHERE  codepermanent = 'LAVP08087001' AND
+SET    nogroupe = 40
+WHERE  codepermanent = 'DEGE10027801' AND
        sigle = 'INF3180' AND
-       nogroupe = 40 AND
+       nogroupe = 30 AND
        codesession = 32003
 ;
--- -> Test C Results (... groupe de depart et de destination avec moins de 5 etudiants sont supprimes)
+COMMIT;
+
+-- C9 -> Test C Results (... Le groupe de INF3180-40 a moins de 5 etudiants. Il est supprime)
+SELECT * FROM inscription WHERE sigle = 'INF3180' AND nogroupe = 40 AND codesession = 32003;
+SELECT * FROM groupecours WHERE sigle = 'INF3180' AND nogroupe = 40 AND codesession = 32003;
 
 
--- C9 -> Test D (Un etudiant s'inscrit à un groupecours avec moins de 4 etudiants...)
--- C9 -> Test D Results (... ce groupecours XXXX est supprime)
+-- C9 -> Test D (Un etudiant s'inscrit au groupecours INF3180-30 a la session 32003)
+INSERT INTO Inscription VALUES('TREL14027801','INF3180',30,32003,'16/08/2003',null,70);
+COMMIT;
 
+-- C9 -> Test D Results (... le groupecours INF3180-30 a moins de 5 etudiants. Il est supprime)
+SELECT * FROM inscription WHERE sigle = 'INF3180' AND nogroupe = 30 AND codesession = 32003;
+SELECT * FROM groupecours WHERE sigle = 'INF3180' AND nogroupe = 30 AND codesession = 32003;
 
-delete from inscription where codepermanent = 'TREJ18088001' AND SIGLE = 'INF1130' AND NOGROUPE = 10 AND CODESESSION = 32003; -- DEBUG
-INSERT INTO Inscription VALUES('TREJ18088001','INF1130',10,32003,'16/08/2003',null,70); -- DEBUG
-
-INSERT INTO Inscription VALUES('DEGE10027801','INF1130',10,32003,'16/08/2003',null,70); -- DEBUG
-select * from inscription; -- DEBUG
-select * from groupecours; -- DEBUG
-SELECT * FROM C9_TMP; 
-rollback; -- DEBUG
-commit;
-
-
-
-SELECT * FROM inscription;
-SELECT * FROM groupecours;
-
-COMMIT
-/
 
