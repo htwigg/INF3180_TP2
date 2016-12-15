@@ -586,7 +586,7 @@ CREATE GLOBAL TEMPORARY TABLE c9_tmp (
 ) ON COMMIT DELETE ROWS;
 
 
--- Trigger pour gestion nbInscriptions et ajout des operations à la table temporaire
+-- Trigger ajout des operations à la table temporaire
 CREATE OR REPLACE TRIGGER Contrainte_C9_A
 BEFORE INSERT OR DELETE OR UPDATE ON inscription
 FOR EACH ROW
@@ -607,12 +607,12 @@ BEGIN
   END IF;
   
   SELECT COUNT(*) INTO isExisting -- Cherche si present dans table temporaire
-    FROM C9_TMP 
-    WHERE sigle = sigleTmp 
-      AND nogroupe = nogroupeTmp
-      AND codesession = codesessionTmp;
+  FROM C9_TMP 
+  WHERE sigle = sigleTmp 
+    AND nogroupe = nogroupeTmp
+    AND codesession = codesessionTmp;
   
-  IF (isExisting = 0) THEN -- Si present, alors l'appel a ce trigger est recursif. Ne rien faire
+  IF (isExisting = 0) THEN -- Si != 0, alors l'appel a ce trigger est recursif. Ne rien faire
       INSERT INTO c9_tmp VALUES(sigleTmp, nogroupeTmp, codesessionTmp);
   END IF;
 END;
