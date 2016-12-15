@@ -619,12 +619,12 @@ END;
 /
 
 
--- Procedure de mise à jour de nbInscriptions
+-- Procedure de mise a jour de nbInscriptions pour utilisation dans trigger Contrainte_C9_B
 CREATE OR REPLACE PROCEDURE SET_GroupeCours_nbInscriptions AS
   BEGIN
     FOR i IN (SELECT sigle, nogroupe, codesession, count(*) AS nbInscriptions 
-              FROM inscription 
-              WHERE dateabandon IS NULL
+              FROM   inscription 
+              WHERE  dateabandon IS NULL
               GROUP BY sigle, nogroupe, codesession)
     LOOP
       UPDATE  GroupeCours
@@ -650,8 +650,8 @@ BEGIN
       AND nogroupe = i.nogroupe
       AND codesession = i.codesession;
   
-    IF (isExisting != 0) THEN -- Si present, alors l'appel a ce trigger est recursif. Ne rien faire
-      SET_GroupeCours_nbInscriptions();
+    IF (isExisting != 0) THEN -- Si != 0, alors l'appel a ce trigger est recursif. Ne rien faire
+      SET_GroupeCours_nbInscriptions(); -- MAJ groupescours.nbInscriptions
       
       SELECT nbInscriptions INTO nbEtudiants -- Recupere nbInscriptions pour ce groupecours
       FROM GroupeCours
@@ -660,7 +660,7 @@ BEGIN
         AND codesession = i.codesession;
       
       IF (nbEtudiants < 5) THEN
-        DELETE FROM groupecours 
+        DELETE FROM groupecours -- La contrainte C5 s'occupe d'effacer les inscriptions
         WHERE sigle = i.sigle 
           AND nogroupe = i.nogroupe
           AND codesession = i.codesession;
